@@ -1,2 +1,2 @@
 # SwimResp
-Motor speed controller for swim tunnels
+Motor speed controller for swim tunnels [FishResp project]
