@@ -37,6 +37,15 @@ const byte enB = 9;
 const byte in3 = 7;
 const byte in4 = 8;
 
+// Pinout for buttons
+const byte button = A4;
+const byte LED_TEST = A5; /// only fore testing *REMOVE
+boolean LED_TEST_State = false; /// only fore testing *REMOVE
+boolean buttonActive = false;
+boolean longPressActive = false;
+long buttonTimer = 0; /// MOVE TO the section 'Time variables'
+long longPressTime = 250; /// MOVE TO the section 'Time variables'
+
 // Time variables
 unsigned long previousTime_flush = 0;
 unsigned long previousTime_measurement = 0;
@@ -45,6 +54,10 @@ unsigned long previousTime_motor = 0;
 void setup(){
   pinMode(LED, OUTPUT);
   pinMode(RELAY, OUTPUT);
+
+  // Button setup
+  pinMode(LED_TEST, OUTPUT);
+  pinMode(button, INPUT);
 
   // Set all the motor control pins to outputs
   pinMode(enA, OUTPUT);
