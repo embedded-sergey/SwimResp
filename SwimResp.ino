@@ -44,7 +44,7 @@ boolean LED_TEST_State = false; /// only fore testing *REMOVE
 boolean buttonActive = false;
 boolean longPressActive = false;
 long buttonTimer = 0; /// MOVE TO the section 'Time variables'
-long longPressTime = 250; /// MOVE TO the section 'Time variables'
+long longPressTime = 3000; /// MOVE TO the section 'Time variables'
 
 // Time variables
 unsigned long previousTime_flush = 0;
@@ -142,14 +142,40 @@ void motorControl(){
 }
 
 void buttonEvents(){
-  
-  /*
-  a. if a button pressed, the motor reverse for a couple of seconds
-     and get back to the previous speed
-  b. if a button pressed for long time (3 sec), then it will go back
-     to the default initial speed
-  c. check out the A5 and A6 buttons.
-  */
+  if(digitalRead(button) == true){
+    if (buttonActive == false) {
+      buttonActive = true;
+      buttonTimer = millis();
+    }
+      
+    if((millis() - buttonTimer) > longPressTime && longPressActive == false){
+      longPressActive == true;
+      // CASE1: long press -> minimum value in the Ucrit protocol
+      digitalWrite(in1, LOW);
+      digitalWrite(in2, LOW);  
+      digitalWrite(in3, LOW);
+      digitalWrite(in4, LOW); 
+    }
+    
+    else{
+      // CASE2: short press -> reverse motor for a several seconds
+      digitalWrite(LED_TEST, true);
+    }
+    
+  }
+  else{
+    if (buttonActive == true) {
+      buttonActive = false;
+    }
+    
+    if (longPressActive == true) {
+      longPressActive = false;
+    }
+    else {
+      // CASE3: no press -> Ucrit protocol is running normally
+      digitalWrite(LED_TEST, false);
+    }
+  }
 }
 
 // Voltage values?
@@ -206,5 +232,6 @@ float FmultiMap(float val, float * _in, float * _out, uint8_t size){
 1. L298n: https://dronebotworkshop.com/dc-motors-l298n-h-bridge/
 2. Multimap: https://playground.arduino.cc/Main/MultiMap/
 3. Buttons: https://www.instructables.com/Arduino-Dual-Function-Button-Long-PressShort-Press/
+   (a mistake in schematics: the orange wire should be in line #5)
 4. Event-based programming: ... //// ADD HERE!
 */
