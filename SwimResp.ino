@@ -1,7 +1,7 @@
 ////////////////////
 // USER INTERFACE //
 ////////////////////
-# include <Controllino.h>
+
 // Set the measurement and flush phases (in seconds)
 unsigned long FLUSH = 2;
 unsigned long MEASUREMENT = 2;
@@ -84,7 +84,8 @@ void flushControl(){
   }
 
   else if(currentTime_flush - previousTime_flush > FLUSH*1000UL && 
-          currentTime_flush - previousTime_flush <= MEASUREMENT*1000UL + FLUSH*1000UL){
+          currentTime_flush - previousTime_flush <= MEASUREMENT*1000UL 
+                                                    + FLUSH*1000UL){
     digitalWrite(RELAY, HIGH); // set pin 3 ON to activate the relay,
                                // so pumps stop working
     // blinking LED during Measurement Phase
@@ -105,8 +106,6 @@ void flushControl(){
 void motorControl(){
   // map actual values (cm/s) to raw (bits 0...255)
   float raw = FmultiMap(SPEED[i], in, out, sizeof in/sizeof *in);
-  Serial.print(sizeof in/sizeof *in);
-  Serial.print("\t");
   Serial.print(SPEED[i]);
   Serial.print(" cm/s \t");
   Serial.print(raw);
@@ -130,6 +129,7 @@ void motorControl(){
 }
 
 void buttonEvents(){
+  
   /*
   a. if a button pressed, the motor reverse for a couple of seconds
      and get back to the previous speed
@@ -164,8 +164,6 @@ float FmultiMap(float val, float * _in, float * _out, uint8_t size){
           (_in[pos] - _in[pos-1]) + _out[pos-1];
 }
 
-
-
 /*for (int i = 30; i < 40; i++)
   {
     analogWrite(enA, i);
@@ -190,3 +188,10 @@ float FmultiMap(float val, float * _in, float * _out, uint8_t size){
 
 // unsigned long SPEED[] = {75, 60, 75, 70, 60, 235, 255};
 // unsigned long LENGTH[] = {20, 10, 20, 30, 80, 20, 20};
+
+/* REFERENCES:
+1. L298n: https://dronebotworkshop.com/dc-motors-l298n-h-bridge/
+2. Multimap: https://playground.arduino.cc/Main/MultiMap/
+3. Buttons: https://www.instructables.com/Arduino-Dual-Function-Button-Long-PressShort-Press/
+4. Event-based programming: ... //// ADD HERE!
+*/
