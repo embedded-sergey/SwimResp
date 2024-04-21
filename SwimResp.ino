@@ -3,11 +3,11 @@
 ////////////////////
 
 // Set the measurement and flush phases (in seconds)
-unsigned long FLUSH = 2;
-unsigned long MEASUREMENT = 2;
+unsigned long FLUSH = 20;
+unsigned long MEASUREMENT = 5;
 
 // Speed (e.g. cm/s) and length (in seconds) of increment steps 
-// of the Ucrit protocol (the arrays should have similar length)
+// of the Ucrit protocol (typically, the have similar length)
 float SPEED[] = {5, 10, 15, 17.5, 20, 
                  22.5, 25, 27.5, 30, 32.5, 
                  35, 37.5, 40, 45, 50}; 
@@ -17,29 +17,36 @@ unsigned long LENGTH[] = {4, 4, 4, 4, 4,
                           4, 4, 4, 4, 4};
 
 // Motor calibration (the arrays should have increasing values)
-float in[]  = {5, 10, 15, 25, 35, 50}; // in cm/s
-float out[] = {28, 38, 47, 98, 160, 255}; // raw data: 0...255
+float in[]  = {5,50}; // in cm/s
+float out[] = {15, 33}; // raw data: 0...255
 
 /////////////////////////
 // IMPLEMENTATION CODE //
 /////////////////////////
+const byte PICO_RX = 2;
+const byte PICO_TX = 3;
+const byte LED = 4;
 
-const byte LED = 13;
-const byte RELAY = A3;
+// Pinout for L298n controlling swimm-tunnels #1 and #2 
+const byte enA = 5; // PWM for a motor
+const byte in1 = 6;
+const byte in2 = 7;
+const byte in3 = 8;
+const byte in4 = 9;
+const byte enB = 10; // PWM for a pump
+
+const byte BUTTON_REVERSE = 10; // longpress to step down in Ucrit
+const byte BUTTON_STOP = 11;    // longpress to step up in Ucrit
+
+const byte I2C_CLOCK = A4; // display
+const byte I2C_DATA = A5; // display
+
 int PERIOD = 1;
 int i = 0;
 
-// Pinout for L298n controlling swimm-tunnels #1 and #2 
-const byte enA = 6;
-const byte in1 = 4;
-const byte in2 = 5;
-const byte enB = 9;
-const byte in3 = 7;
-const byte in4 = 8;
 
-// Pinout for buttons
-const byte button = A4;
-const byte LED_TEST = A5; /// only fore testing *REMOVE
+const byte button = A2;
+const byte LED_TEST = A3; /// only fore testing *REMOVE
 boolean LED_TEST_State = false; /// only fore testing *REMOVE
 boolean buttonActive = false;
 boolean longPressActive = false;
@@ -47,13 +54,12 @@ long buttonTimer = 0; /// MOVE TO the section 'Time variables'
 long longPressTime = 3000; /// MOVE TO the section 'Time variables'
 
 // Time variables
-unsigned long previousTime_flush = 0;
+unsigned long previousTime_pump = 0;
 unsigned long previousTime_measurement = 0;
 unsigned long previousTime_motor = 0;
 
 void setup(){
   pinMode(LED, OUTPUT);
-  pinMode(RELAY, OUTPUT);
 
   // Button setup
   pinMode(LED_TEST, OUTPUT);
@@ -73,36 +79,35 @@ void setup(){
   digitalWrite(in3, LOW);
   digitalWrite(in4, HIGH);
 
-  // Starter for motors
-  analogWrite(enA, 127); 
-  analogWrite(enB, 127); 
+  // Starter for a motor
+  analogWrite(enA, 255);
   delay(20);
   
   Serial.begin(9600);
 }
 
 void loop(){
-  flushControl(); // to control flush pumps
-  motorControl(); // to regulate swim speed
-  buttonEvents(); // to identify button actions
+  pumpControl(); // to control a pump
+  motorControl(); // to regulate motor speed
+  //buttonEvents(); // to identify button actions
 }
 
-void flushControl(){
-  unsigned long currentTime_flush = millis();
+void pumpControl(){
+  unsigned long currentTime_pump = millis();
 
-  if(currentTime_flush - previousTime_flush <= FLUSH*1000UL){
-    digitalWrite(RELAY, LOW); // set pin 3 OFF to turn off the relay,
-                              // so pumps start working again.
+  if(currentTime_pump - previousTime_pump <= FLUSH*1000UL){
+   // set pin 3 OFF to turn off the relay,
+    analogWrite(enB, 255);   // so pumps start working again.
     digitalWrite(LED, HIGH);
   }
 
-  else if(currentTime_flush - previousTime_flush > FLUSH*1000UL && 
-          currentTime_flush - previousTime_flush <= MEASUREMENT*1000UL 
+  else if(currentTime_pump - previousTime_pump > FLUSH*1000UL && 
+          currentTime_pump - previousTime_pump <= MEASUREMENT*1000UL 
                                                     + FLUSH*1000UL){
-    digitalWrite(RELAY, HIGH); // set pin 3 ON to activate the relay,
+    digitalWrite(enB, 0); // set pin 3 ON to activate the relay,
                                // so pumps stop working
     // blinking LED during Measurement Phase
-      if(currentTime_flush % 1000UL <= 800UL){
+      if(currentTime_pump % 1000UL <= 800UL){
         digitalWrite(LED, LOW);
       }
       else{
@@ -111,7 +116,7 @@ void flushControl(){
   }
 
   else{
-    previousTime_flush = currentTime_flush;
+    previousTime_pump = currentTime_pump;
     PERIOD++;
   }
 }
@@ -128,7 +133,6 @@ void motorControl(){
   unsigned long currentTime_motor = millis();
   if(currentTime_motor - previousTime_motor <= LENGTH[i]*1000){
     analogWrite(enA, raw);
-    analogWrite(enB, raw);
   }
   else{
     i++;
