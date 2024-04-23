@@ -1,15 +1,75 @@
 ////////////////////
 // USER INTERFACE //
 ////////////////////
+
+// Set the measurement and flush phases (in seconds)
+unsigned long FLUSH = 20;
+unsigned long MEASUREMENT = 5;
+
+// Speed (e.g. cm/s) and length (in seconds) of increment steps 
+// of the Ucrit protocol (typically, the have similar length)
+float SPEED[] = {5, 10, 15, 17.5, 20, 
+                 22.5, 25, 27.5, 30, 32.5, 
+                 35, 37.5, 40, 45, 50}; 
+
+int LENGTH[] = {60, 10, 10, 10, 10, 
+                10, 10, 10, 10, 10, 
+                10, 10, 10, 10, 10};
+
+// Motor calibration (the arrays should have increasing values)
+float in[]  = {5, 50}; // in cm/s
+float out[] = {15, 33}; // raw data: 0...255
+
+
+
+/////////////////////////
+// IMPLEMENTATION CODE //
+/////////////////////////
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
+const byte PICO_RX = 2;
+const byte PICO_TX = 3;
+const byte LED = 4;
+
+// Pinout for L298n controlling swimm-tunnels #1 and #2 
+const byte enA = 5; // PWM for a motor
+const byte in1 = 6;
+const byte in2 = 7;
+const byte in3 = 8;
+const byte in4 = 9;
+const byte enB = 10; // PWM for a pump
+
+const byte BUTTON_REVERSE = 11; // longpress to step down in Ucrit
+const byte BUTTON_STOP = 12;    // longpress to step up in Ucrit
+
+const byte I2C_CLOCK = A4; // display
+const byte I2C_DATA = A5; // display
+
+int PERIOD = 1;
+unsigned long TIMER;
+int i = 0;
+
+const byte button = A2;
+const byte LED_TEST = A3; /// only fore testing *REMOVE
+boolean LED_TEST_State = false; /// only fore testing *REMOVE
+boolean buttonActive = false;
+boolean longPressActive = false;
+long buttonTimer = 0; /// MOVE TO the section 'Time variables'
+long longPressTime = 3000; /// MOVE TO the section 'Time variables'
+
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 #define OLED_RESET    -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+// Time variables
+unsigned long previousTime_pump = 0;
+unsigned long previousTime_measurement = 0;
+unsigned long previousTime_motor = 0;
+unsigned long previousTime_display = 0;
 
 const unsigned char myBitmapMaker [] PROGMEM = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xf7, 0xff, 0xff, 0xff, 0xff, 
@@ -78,64 +138,6 @@ const unsigned char myBitmapMaker [] PROGMEM = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe, 0x7f, 0xff, 0xff, 0xff, 0xff
       };
 
-// Set the measurement and flush phases (in seconds)
-unsigned long FLUSH = 20;
-unsigned long MEASUREMENT = 5;
-
-// Speed (e.g. cm/s) and length (in seconds) of increment steps 
-// of the Ucrit protocol (typically, the have similar length)
-float SPEED[] = {5, 10, 15, 17.5, 20, 
-                 22.5, 25, 27.5, 30, 32.5, 
-                 35, 37.5, 40, 45, 50}; 
-
-int LENGTH[] = {20, 10, 10, 10, 10, 
-                10, 10, 10, 10, 10, 
-                10, 10, 10, 10, 10};
-
-// Motor calibration (the arrays should have increasing values)
-float in[]  = {5, 50}; // in cm/s
-float out[] = {15, 33}; // raw data: 0...255
-
-/////////////////////////
-// IMPLEMENTATION CODE //
-/////////////////////////
-const byte PICO_RX = 2;
-const byte PICO_TX = 3;
-const byte LED = 4;
-
-// Pinout for L298n controlling swimm-tunnels #1 and #2 
-const byte enA = 5; // PWM for a motor
-const byte in1 = 6;
-const byte in2 = 7;
-const byte in3 = 8;
-const byte in4 = 9;
-const byte enB = 10; // PWM for a pump
-
-const byte BUTTON_REVERSE = 11; // longpress to step down in Ucrit
-const byte BUTTON_STOP = 12;    // longpress to step up in Ucrit
-
-const byte I2C_CLOCK = A4; // display
-const byte I2C_DATA = A5; // display
-
-int PERIOD = 1;
-unsigned long TIMER;
-int i = 0;
-
-
-const byte button = A2;
-const byte LED_TEST = A3; /// only fore testing *REMOVE
-boolean LED_TEST_State = false; /// only fore testing *REMOVE
-boolean buttonActive = false;
-boolean longPressActive = false;
-long buttonTimer = 0; /// MOVE TO the section 'Time variables'
-long longPressTime = 3000; /// MOVE TO the section 'Time variables'
-
-// Time variables
-unsigned long previousTime_pump = 0;
-unsigned long previousTime_measurement = 0;
-unsigned long previousTime_motor = 0;
-unsigned long previousTime_display = 0;
-
 void setup(){
 
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
@@ -188,52 +190,54 @@ void loop(){
 }
 
 void displayTemp() {
+  unsigned long currentTime_display = millis();
+  if(currentTime_display - previousTime_display > 1000UL){
+    display.clearDisplay();
+    display.setTextColor(WHITE);
+    
+    // main info about the current interval of Ucrit
+    display.setTextSize(2);
+    display.setCursor(0, 2);
+    display.print("Velocity");
+    display.setCursor(0, 28);
+    display.setTextSize(2);
+    display.print(SPEED[i]);
+    display.setTextSize(1);
+    display.print(" cm/s");
 
-  display.clearDisplay();
-  display.setTextColor(WHITE);
-  display.setTextSize(2);
-  display.setCursor(0, 2);
-  display.print("Velocity");
-  display.setCursor(0, 28);
-  display.setTextSize(2);
-  display.print(SPEED[i]);
-  display.setTextSize(1);
-  display.print(" cm/s");
+    display.setCursor(77, 41);
+    display.print("M22");
+    display.setCursor(101, 2);
 
-  display.setCursor(77, 41);
-  display.setTextSize(1);
-  display.print("M22");
+    display.setCursor(101, 47);
+    display.print("NOW");
+    display.setCursor(101, 57);
+    display.print(LENGTH[i]);
+    display.print("s");
+    int percent_bar = (100*TIMER)/LENGTH[i];
 
-  display.setCursor(102, 2);
-  display.setTextSize(1);
-  display.print("next");
+    for(int k = 5; k < 99; k = k+10){
+      display.drawLine(k, 53, k, 62, WHITE);
+    }
+    display.drawRect(0, 53, 96, 10, WHITE);
+    display.fillRect(0, 53, percent_bar, 10, WHITE);
 
-  display.setCursor(102, 12);
-  display.print("600s");
 
-  display.setCursor(102, 22);
-  display.print("12.0");
+    // info module for the next interval of Ucrit
+    display.setCursor(101, 3);
+    display.print("NEXT");
+    display.setCursor(101, 13);
+    display.print("600s");
+    display.setCursor(101, 23);
+    display.print("12.0");
+    display.setCursor(101, 33);
+    display.print("cm/s");
+    display.drawRect(98, 0, 29, 43, WHITE);
 
-  display.setCursor(102, 32);
-  display.print("cm/s");
-
-  display.setCursor(102, 47);
-  display.print("now");
-
-  display.setCursor(102, 57);
-  display.print(LENGTH[i]);
-  display.print("s");
-
-  int percent_bar = (100*TIMER)/LENGTH[i];
-  display.fillRect(0, 53, percent_bar, 10, SSD1306_WHITE);
-
-  display.drawLine(99, 0, 127, 0, SSD1306_WHITE);   // up
-  display.drawLine(99, 0, 99, 42, SSD1306_WHITE);   // down 
-  display.drawLine(99, 42, 127, 42, SSD1306_WHITE); // left
-  display.drawLine(127, 0, 127, 42, SSD1306_WHITE); // right
-
-  display.display();
-}
+    display.display();
+    previousTime_display = currentTime_display;
+    }
+  }
 
 void pumpControl(){
   unsigned long currentTime_pump = millis();
