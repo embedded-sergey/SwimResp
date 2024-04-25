@@ -29,6 +29,7 @@ float out[] = {15, 33}; // raw data: 0...255
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <SoftwareSerial.h>
 
 // pinout map
 const byte PICO_RX = 2; // DO meter
@@ -44,6 +45,12 @@ const byte BUTTON_GREEN = 11;
 const byte BUTTON_RED = 12;
 const byte I2C_CLOCK = A4; // display
 const byte I2C_DATA = A5; // display
+
+// DO logger
+SoftwareSerial mySerial(PICO_RX, PICO_TX); // RX, TX
+char charArr[255];
+char *strings[25];
+char *ptr = NULL;
 
 // buttons
 long buttonTimer = 0;
@@ -177,8 +184,11 @@ void setup(){
   // Kick starter for the motor
   analogWrite(enA, 255);
   delay(20);
-  
+
+  // Serial communication settings
   Serial.begin(9600);
+  
+//  mySerial.begin(19200);
 }
 
 void loop(){
@@ -186,6 +196,7 @@ void loop(){
   motorControl(); // to regulate motor speed
   displayUpdate();
   buttonEvents(); // to identify button actions
+ // loggerData();
 }
 
 void displayUpdate() {
@@ -369,8 +380,64 @@ void buttonEvents(){
 		}
 	}
 }
+/*
+void loggerData() {
+  mySerial.println("MEA 1 7");
+  mySerial.listen();
 
+  int i = 0;
+  while (mySerial.available() > 0) {
+    int inByte = mySerial.read();
+    Serial.write(inByte);
+    charArr[i] = inByte;
+    i++;
+  }
+  Serial.println();
 
+  byte index = 0;
+  ptr = strtok(charArr, " ");  // delimiters space and comma
+  while (ptr != NULL)
+  {
+      strings[index] = ptr;
+      index++;
+      ptr = strtok(NULL, " ");
+  }
+  
+  String a = (strings[5]); // (umol*32)/1000) -> mg/L
+  float DO = (32 * a.toFloat())/1000000;
+
+  String b = (strings[7]); // %
+  float Saturation = (b.toFloat())/1000;
+
+  String c = (strings[8]); // C
+  float Temperature = (c.toFloat())/1000;
+
+  String d = (strings[12]); // mbar
+  int Pressure = (d.toInt());
+  // quick fix for a randomly cut pressure value due to a buffer 
+  // limitation in the UART communication (i.e. 64 bytes)
+  if (Pressure > 500 && Pressure < 1500){
+    Pressure = (d.toFloat());
+  }
+  else if (Pressure > 5000 && Pressure < 15000){
+    Pressure = (d.toFloat())/10;
+  }
+  else if (Pressure > 50000 && Pressure < 150000){
+    Pressure = (d.toFloat())/100;
+  }
+  else if (Pressure > 500000 && Pressure < 1500000){
+    Pressure = (d.toFloat())/100;
+  }
+  else{
+  }
+
+  Serial.println(DO);
+  Serial.println(Saturation);
+  Serial.println(Temperature);
+  Serial.println(Pressure);
+  delay(1000);
+}
+*/
 
 // Originally from: https://playground.arduino.cc/Main/MultiMap
 float FmultiMap(float val, float * _in, float * _out, uint8_t size){
