@@ -4,21 +4,25 @@
 
 // Set the measurement and flush phases (in seconds)
 unsigned long FLUSH = 0;
-unsigned long MEASUREMENT = 1000;
+unsigned long MEASUREMENT = 100;
 
-// Speed (e.g. cm/s) and length (in seconds) of increment steps 
+// Or choose the DO thresholds for the flush pump (in % of air saturation)
+const float UPPER_DO_LIMIT = 95;  // to trigger the flush pump OFF
+const float LOWER_DO_LIMIT = 70;  // to trigger the flush pump ON
+
+// Speed (e.g. cm/s) and length (in seconds) of increment steps
 // of the Ucrit protocol (typically, the have similar length)
-float SPEED[] = {5, 10, 15, 17.5, 20, 
-                 22.5, 25, 27.5, 30, 32.5, 
-                 35, 37.5, 40, 45, 50}; 
+float SPEED[] = {5, 10, 15, 17, 20,
+                 22.5, 25, 27.5, 30, 32.5,
+                 35, 37.5, 40, 45, 50};
 
-unsigned int LENGTH[] = {10, 10, 10, 10, 10, 
-                10, 10, 10, 10, 10, 
-                10, 10, 10, 10, 10};
+unsigned int LENGTH[] = {20, 20, 20, 200, 20,
+                         20, 20, 20, 20, 20,
+                         20, 20, 20, 20, 20};
 
 // Motor calibration (the arrays should have increasing values)
-float in[]  = {5, 50}; // in cm/s
-float out[] = {15, 33}; // raw data: 0...255
+float in[]  = {5, 10, 20, 50}; // in cm/s
+float out[] = {13, 15, 20, 255}; // raw data: 0...255
 
 
 
@@ -423,4 +427,5 @@ float FmultiMap(float val, float * _in, float * _out, uint8_t size){
 4. Event-based programming: ... //// ADD HERE!
 5. Display library, i.e. 'AvrI2c128x64.ino' example: https://github.com/greiman/SSD1306Ascii
 6. Serial protocol for Pyroscience: ... //// ADD HERE!
+7. SoftwareSerial Library documentation: https://docs.arduino.cc/learn/built-in-libraries/software-serial/
 */
