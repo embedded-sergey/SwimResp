@@ -2,7 +2,16 @@
 Motor speed controller for swim tunnels [FishResp project]
 This prototype is based on PalmResp swim tunnel:
 
-![swim_tunnel_1](https://github.com/embedded-sergey/SwimResp/assets/76912739/8ececc88-7d39-43da-9abf-0e637f9f36c4)
-![swim_tunnel_2](https://github.com/embedded-sergey/SwimResp/assets/76912739/1f3f29df-9e09-46d0-8385-b84b22bb43d7)
+## Software requirements
+- Windows 10
+- Microsoft Excel
+- Arduino IDE
 
-More information will come soon.
+## Software installation
+1. Donwload and unzip this repository on Windows PC
+2. Download and install Arduino IDE (version 2)
+3. Open SwimResp.ino, select the COM port and Arduino Nano as a board, press OK
+4. Change parameters in the "USER INTERFACE" code section (if needed) and press the 'Upload' button
+5. Open properties of the SwimResp.xlsm file and check the 'Unblock' box in the 'Security' section
+6. Open SwimResp.xlsm, Enable Content in the pop-up security warning and Open PLC DAQ
+7. Type a COM port number in the Port field and press the 'Connect' button
