@@ -2,26 +2,41 @@
 // USER INTERFACE //
 ////////////////////
 
-// Set the measurement and flush phases (in seconds)
-unsigned long FLUSH = 0;
-unsigned long MEASUREMENT = 100;
+// Type which method for switching between flush and measurement phases: 
+// i.e. uncomment one of the two options below i.e (by default OPTION 1).
 
-// Or choose the DO thresholds for the flush pump (in % of air saturation)
-const float UPPER_DO_LIMIT = 95;  // to trigger the flush pump OFF
-const float LOWER_DO_LIMIT = 70;  // to trigger the flush pump ON
+// OPTION 1: Set the constant measurement and flush phase periods (in seconds)
+// String PHASE_SWITCH_METHOD = "constant_phase_period"; // (UN)COMMENT THIS LINE
+unsigned long FLUSH = 60;
+unsigned long MEASUREMENT = 240;
 
-// Speed (e.g. cm/s) and length (in seconds) of increment steps
+// OPTION 2: Choose the % air saturation high threshold for DO to start 
+//           measurement phase and low threshold to start flushing the tunnel
+String PHASE_SWITCH_METHOD = "saturation_threshold"; // (UN)COMMENT THIS LINE
+const float LOW_SATURATION_THRESHOLD = 70;  // to trigger the flush pump ON
+const float HIGH_SATURATION_THRESHOLD = 95;  // to trigger the flush pump OFF
+
+
+// Flow velocity (in cm/s) and length (in seconds) of increment steps
 // of the Ucrit protocol (typically, the have similar length)
-float SPEED[] = {5, 10, 15, 17, 20,
-                 22.5, 25, 27.5, 30, 32.5,
-                 35, 37.5, 40, 45, 50};
+float VELOCITY[] = {5, 10, 15, 17, 20,
+                    22.5, 25, 27.5, 30, 32.5,
+                    35, 37.5, 40, 45, 50};
 
-unsigned int LENGTH[] = {20, 20, 20, 200, 20,
+unsigned int LENGTH[] = {20, 20, 20, 20, 20,
                          20, 20, 20, 20, 20,
                          20, 20, 20, 20, 20};
 
-// Motor calibration (the arrays should have increasing values)
-float in[]  = {5, 10, 20, 50}; // in cm/s
+// Motor calibration
+// Record the flow of die solution or neutrally buoyant particlesa using a 
+// slow-motion camera at one motor speed starting from lowest posssible.
+// Calculate flow velocity based on your record and add it in  the arrays 
+// below with the corresponding PWM value for that  motor speed (0...255). 
+// Repeat the process with other motor speeds to get at least three reference
+//  points for motor calibration (more reference points -> better precision).
+
+// Note that the values in an array must ascend progressively!
+float in[]  = {5, 10, 20, 50}; // flow velocity in cm/s
 float out[] = {13, 15, 20, 255}; // raw data: 0...255
 
 
@@ -60,6 +75,11 @@ char charArr[255];
 char *strings[25];
 char *ptr = NULL;
 unsigned long previousTime_logger = 0;
+float DO;
+float SATURATION;
+float TEMPERATURE;
+float PRESSURE;
+bool HIGH_SATURATION_REACHED = true; // flag to know when to stop flushing
 
 // buttons
 long buttonTimer = 0;
@@ -75,8 +95,12 @@ boolean reverseMotor2 = true; //motor IN2
 int PERIOD = 1;
 float TIMER;
 int i = 0;
+String PHASE = "M0", F, M, f = "F", m = "M";
 unsigned long previousTime_pump = 0;
 unsigned long previousTime_motor = 0;
+
+// For autosaving
+unsigned long lastSave;
 
 
 void setup(){
@@ -115,7 +139,11 @@ void setup(){
   analogWrite(enA, 255);
   delay(20);
   
+  // For autosaving
+  lastSave = millis(); // inital start
+
   Serial.begin(9600);
+  Serial.println("CLEARRANGE,A,2,H,1000000"); // trick to get rid of AM-PM
   mySerial.begin(19200); // for data streaming from DO logger 
 }
 
@@ -126,42 +154,92 @@ void loop(){
   buttonEvents(); // to identify button actions
   displayUpdate(); // to show motor information
   loggerStream(); // to receive data from logger
+  autoSave(); // to save data in Excel every minute
 }
-
+ 
 
 void pumpControl(){
-  unsigned long currentTime_pump = millis();
-
-  if(currentTime_pump - previousTime_pump <= FLUSH*1000UL){
-   // set pin 3 OFF to turn off the relay,
-    analogWrite(enB, 255);   // so pumps start working again.
-    digitalWrite(LED, HIGH);
+  if (PHASE_SWITCH_METHOD == "constant_phase_period"){
+    unsigned long currentTime_pump = millis();
+    if(currentTime_pump - previousTime_pump <= FLUSH*1000UL){
+      // set pin 3 OFF to turn off the relay,
+      F = f + PERIOD;
+      analogWrite(enB, 255);   // so pumps start working again.
+      digitalWrite(LED, HIGH);
+      PHASE = F;
+    }
+    else if(currentTime_pump - previousTime_pump > FLUSH*1000UL && 
+            currentTime_pump - previousTime_pump <= MEASUREMENT*1000UL 
+                                                      + FLUSH*1000UL){
+      digitalWrite(enB, 0); // set pin 3 ON to activate the relay,
+                                // so pumps stop working
+        // blinking LED during Measurement Phase
+        M = m + PERIOD;
+        if(currentTime_pump % 1000UL <= 800UL){
+          digitalWrite(LED, LOW);
+        }
+        else{
+          digitalWrite(LED, HIGH);
+        }
+        PHASE = M;
+    }
+    else{
+      previousTime_pump = currentTime_pump;
+      PERIOD++;
+    }
   }
 
-  else if(currentTime_pump - previousTime_pump > FLUSH*1000UL && 
-          currentTime_pump - previousTime_pump <= MEASUREMENT*1000UL 
-                                                    + FLUSH*1000UL){
-    digitalWrite(enB, 0); // set pin 3 ON to activate the relay,
-                               // so pumps stop working
-    // blinking LED during Measurement Phase
+  else if(PHASE_SWITCH_METHOD == "saturation_threshold"){
+    unsigned long currentTime_pump = millis();
+
+    if((SATURATION <= LOW_SATURATION_THRESHOLD || HIGH_SATURATION_REACHED == false) && DO != 0){
+      F = f + PERIOD;
+      analogWrite(enB, 255);   // so pumps start working again.
+      digitalWrite(LED, HIGH);
+      String previous_phase = PHASE;
+      PHASE = F;  
+      if(PHASE[0] != previous_phase[0]){
+        previousTime_pump = currentTime_pump;
+      }
+      if(SATURATION > HIGH_SATURATION_THRESHOLD){
+        HIGH_SATURATION_REACHED = true;
+      }
+      else{
+        HIGH_SATURATION_REACHED = false;
+      }
+    }
+    else if((SATURATION > LOW_SATURATION_THRESHOLD && HIGH_SATURATION_REACHED == true) && DO != 0){
+      digitalWrite(enB, 0); // set pin 3 ON to activate the relay,
+                              // so pumps stop working
+      // blinking LED during Measurement Phase
+      M = m + PERIOD;
       if(currentTime_pump % 1000UL <= 800UL){
         digitalWrite(LED, LOW);
       }
       else{
         digitalWrite(LED, HIGH);
       }
+      String previous_phase = PHASE;
+      PHASE = M;
+      if(PHASE[0] != previous_phase[0]){
+        previousTime_pump = currentTime_pump;
+        PERIOD++;
+      }
+    }
+    else{
+      Serial.println("SOMETHING IS WRONG HERE !!!");
+    }
   }
 
   else{
-    previousTime_pump = currentTime_pump;
-    PERIOD++;
+    Serial.println("Choose the phase switch method in USER INTERFACE: lines 5-17");
   }
 }
 
 
 void motorControl(){
   // map actual values (cm/s) to raw (bits 0...255)
-  float raw = FmultiMap(SPEED[i], in, out, sizeof in/sizeof *in);
+  float raw = FmultiMap(VELOCITY[i], in, out, sizeof in/sizeof *in);
 
   unsigned long currentTime_motor = millis();
   if(currentTime_motor - previousTime_motor <= LENGTH[i]*1000UL){
@@ -237,7 +315,7 @@ void buttonEvents(){
       // CASE3: long press -> reverse motor
       reverseMotor1 = !reverseMotor1; //motor IN1
       reverseMotor2 = !reverseMotor2; //motor IN2
-      for (int j = SPEED[i]; j >= 0; j = j-10){  //soft reverse
+      for (int j = VELOCITY[i]; j >= 0; j = j-10){  //soft reverse
           analogWrite(enA, j);
           delay(5);
         }
@@ -249,12 +327,12 @@ void buttonEvents(){
       }
     else if((button1Active == false) && (button2Active == true)) {
       // CASE4: long press -> 2.5 hour pause
-      for (int j = SPEED[i]; j >= SPEED[0]; j = j-1){  //soft reverse
+      for (int j = VELOCITY[i]; j >= VELOCITY[0]; j = j-1){  //soft reverse
         analogWrite(enA, j);
         delay(20);
         }
       i = 0;
-      SPEED[0] = {5};
+      VELOCITY[0] = {5};
       LENGTH[0] = {9999};
       }
 		else{
@@ -279,7 +357,7 @@ void displayUpdate() {
     }
 
     oled.setCursor(0,3);
-    oled.print((SPEED[i]));
+    oled.print((VELOCITY[i]));
     oled.setCursor(64,3);
     oled.print(" cm/s");
 
@@ -304,7 +382,7 @@ void displayUpdate() {
     oled.print(LENGTH[i+1]);
     oled.print("s   ");
     oled.setCursor(64,7);
-    oled.print((SPEED[i+1]));
+    oled.print((VELOCITY[i+1]));
     oled.setCursor(100,7);
     oled.print("cm/s");
 
@@ -318,12 +396,12 @@ void loggerStream(){
   if(currentTime_logger - previousTime_logger > 1000UL){
     mySerial.println("MEA 1 7");
 
-    int i = 0;
+    int k = 0;
     while (mySerial.available() > 0) {
       int inByte = mySerial.read();
       Serial.write(inByte);
-      charArr[i] = inByte;
-      i++;
+      charArr[k] = inByte;
+      k++;
     }
     Serial.println();
 
@@ -337,40 +415,49 @@ void loggerStream(){
     }
 
     String a = (strings[5]); // (umol*32)/1000) -> mg/L
-    float DO = (32 * a.toFloat())/1000000;
+    DO = (32 * a.toFloat())/1000000;
 
     String b = (strings[7]); // %
-    float Saturation = (b.toFloat())/1000;
+    SATURATION = (b.toFloat())/1000;
 
     String c = (strings[8]); // C
-    float Temperature = (c.toFloat())/1000;
+    TEMPERATURE = (c.toFloat())/1000;
 
     String d = (strings[12]); // mbar
-    float Pressure = (d.toFloat());
+    PRESSURE = (d.toFloat());
     // quick fix for a randomly cut pressure value due to a buffer 
     // limitation in the UART communication (i.e. 64 bytes)
-    if (Pressure > 500 && Pressure < 1500){
-      Pressure = (d.toFloat());
+    if (PRESSURE > 500 && PRESSURE < 1500){
+      PRESSURE = (d.toFloat());
     }
-    else if (Pressure > 5000 && Pressure < 15000){
-      Pressure = (d.toFloat())/10;
+    else if (PRESSURE > 5000 && PRESSURE < 15000){
+      PRESSURE = (d.toFloat())/10;
     }
-    else if (Pressure > 50000 && Pressure < 150000){
-      Pressure = (d.toFloat())/100;
+    else if (PRESSURE > 50000 && PRESSURE < 150000){
+      PRESSURE = (d.toFloat())/100;
     }
-    else if (Pressure > 500000 && Pressure < 1500000){
-      Pressure = (d.toFloat())/1000;
+    else if (PRESSURE > 500000 && PRESSURE < 1500000){
+      PRESSURE = (d.toFloat())/1000;
     }
     else{
     }
 
-    // !!! DEBUG: delete later !!!
-    Serial.println(DO);
-    Serial.println(Saturation);
-    Serial.println(Temperature);
-    Serial.println(Pressure);
+    // Parse to PLX-DAQ
+    if (TEMPERATURE != 0 && DO != 0 && PHASE != "M0"){
+      Serial.println((String) "DATA,DATE,TIME," + (String) PHASE + (",") + TEMPERATURE + (",")
+                            + DO + (",") + (VELOCITY[i]) + (",") + PRESSURE + (",") + SATURATION);
+    }
 
     previousTime_logger = currentTime_logger;
+  }
+}
+
+
+void autoSave(){
+  if (millis() - lastSave >= 60000) { // one minute auto save
+    Serial.println((String) "SAVEWORKBOOK");
+    lastSave = millis();
+    //Serial.println((String) "DONE"); // flushing the serial port in Excel
   }
 }
 
@@ -395,30 +482,6 @@ float FmultiMap(float val, float * _in, float * _out, uint8_t size){
 }
 
 
-// Voltage values?
-// Remove units
-// connect to DAQ-PLX2
-// form a nice table
-// have a nice graph
-
-
-/*for (int i = 30; i < 40; i++)
-  {
-    analogWrite(enA, i);
-    analogWrite(enB, i);
-    delay(1000);
-  } 
-  
-  // Decelerate from maximum speed to zero
-
- 
-  // Now turn off motors
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, LOW);  
-  digitalWrite(in3, LOW);
-  digitalWrite(in4, LOW);  
-}*/
-
 /* REFERENCES:
 1. L298n: https://dronebotworkshop.com/dc-motors-l298n-h-bridge/
 2. Multimap: https://playground.arduino.cc/Main/MultiMap/
@@ -427,5 +490,4 @@ float FmultiMap(float val, float * _in, float * _out, uint8_t size){
 4. Event-based programming: ... //// ADD HERE!
 5. Display library, i.e. 'AvrI2c128x64.ino' example: https://github.com/greiman/SSD1306Ascii
 6. Serial protocol for Pyroscience: ... //// ADD HERE!
-7. SoftwareSerial Library documentation: https://docs.arduino.cc/learn/built-in-libraries/software-serial/
-*/
+7. SoftwareSerial Library documentation: https://docs.arduino.cc/learn/built-in-libraries/software-serial/ */
