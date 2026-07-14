@@ -1,18 +1,20 @@
 # SwimResp
-Motor speed controller for swim tunnels [FishResp project]
-This prototype is based on PalmResp swim tunnel:
+SwimResp is a pump and motor speed controller for swim tunnels used to perform Ucrit measurements.  It also interfaces with the PyroScience Pico‑OEM module to transmit optical dissolved‑oxygen and temperature data over USB to a PC for logging during intermittent‑flow aquatic respirometry workflows.
 
-## Software requirements
-- Windows 10
-- Microsoft Excel
-- Arduino IDE
+It is part of the FishResp project (more information at https://fishresp.org).
 
-## Software installation
-1. Donwload and unzip this repository on Windows PC
-2. Download and install Arduino IDE (version 2)
-3. Open SwimResp.ino, select the COM port and Arduino Nano as a board, press OK
-4. Change parameters in the "USER INTERFACE" code section (if needed) 
-5. Press the 'Upload' button to flash
-6. Open properties of the SwimResp.xlsm file and check the 'Unblock' box in the 'Security' section
-7. Open SwimResp.xlsm, Enable Content in the pop-up security warning and Open PLC DAQ
-8. Type a COM port number in the Port field and press the 'Connect' button
+## Build Guide
+The complete assembly, wiring, calibration, and safety instructions are provided in: `docs/SwimResp_Build_Guide.md`
+
+This README intentionally avoids duplicating the Build Guide.
+
+## Licensing
+SwimResp uses a multi‑license structure:
+
+- **Hardware designs:** CERN‑OHL‑S v2  
+- **Software:** GPL‑3.0  
+- **Documentation:** CC‑BY‑4.0  
+
+Mixed‑content files (e.g., documentation containing schematics or code snippets) are governed by the license of each component.
+
+See the **LICENSE** file for the human‑readable overview and the `LICENSES/` directory for full legal texts.
