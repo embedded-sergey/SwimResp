@@ -6,26 +6,22 @@
 // i.e. uncomment one of the two options below i.e (by default OPTION 1).
 
 // OPTION 1: Set the constant measurement and flush phase periods (in seconds)
-// String PHASE_SWITCH_METHOD = "constant_phase_period"; // (UN)COMMENT THIS LINE
+// String PHASE_SWITCH_METHOD = "constant_phase_period"; // (UN)COMMENT THIS LINE!
 unsigned long FLUSH = 60;
 unsigned long MEASUREMENT = 240;
 
 // OPTION 2: Choose the % air saturation high threshold for DO to start 
 //           measurement phase and low threshold to start flushing the tunnel
-String PHASE_SWITCH_METHOD = "saturation_threshold"; // (UN)COMMENT THIS LINE
-const float LOW_SATURATION_THRESHOLD = 70;  // to trigger the flush pump ON
-const float HIGH_SATURATION_THRESHOLD = 95;  // to trigger the flush pump OFF
+String PHASE_SWITCH_METHOD = "saturation_threshold"; // (UN)COMMENT THIS LINE!
+const float LOW_SATURATION_THRESHOLD = 75;  // to trigger the flush pump ON
+const float HIGH_SATURATION_THRESHOLD = 90;  // to trigger the flush pump OFF
 
 
 // Flow velocity (in cm/s) and length (in seconds) of increment steps
 // of the Ucrit protocol (typically, the have similar length)
-float VELOCITY[] = {5, 10, 15, 17, 20,
-                    22.5, 25, 27.5, 30, 32.5,
-                    35, 37.5, 40, 45, 50};
+float VELOCITY[] = {2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0};
 
-unsigned int LENGTH[] = {20, 20, 20, 20, 20,
-                         20, 20, 20, 20, 20,
-                         20, 20, 20, 20, 20};
+unsigned int LENGTH[] = {300, 300, 300, 300, 300, 300, 300, 300, 300};
 
 // Motor calibration
 // Record the flow of die solution or neutrally buoyant particlesa using a 
@@ -36,8 +32,8 @@ unsigned int LENGTH[] = {20, 20, 20, 20, 20,
 //  points for motor calibration (more reference points -> better precision).
 
 // Note that the values in an array must ascend progressively!
-float in[]  = {5, 10, 20, 50}; // flow velocity in cm/s
-float out[] = {13, 15, 20, 255}; // raw data: 0...255
+float in[]  = {0.8, 1.2, 3.2, 3.7, 4.3, 6.2}; // flow velocity in cm/s
+float out[] = {15, 18, 25, 40, 80, 225}; // raw data: 0...255
 
 
 
