@@ -25,12 +25,19 @@ toc-depth: 3
    2.3 [Mechanical and Tool Safety](#23-mechanical-and-tool-safety)
 3. [Bill of Materials](#3-bill-of-materials)
 4. [Tools and Consumables](#4-tools-and-consumables)
+5. [Assembly Instructions](#5-assembly-instructions)  
+   5.1 [Preparing the enclosure](#51-preparing-the-enclosure)  
+   5.2 [Installing power distribution components](#52-installing-power-distribution-components)  
+   5.3 [Installing and wiring the controller](#53-installing-and-wiring-the-controller)  
+   5.4 [Adding the user interface components](#54-adding-the-user-interface-components)  
+   5.5 [Connecting the DO and temperature logger](#55-connecting-the-do-and-temperature-logger)  
+   5.6 [Finalizing the enclosure](#56-finalizing-the-enclosure)
 
 ---
 
 # 1. Introduction
 
-SwimResp is an open‑source device for controlling a 12 V DC pump and motor in a DIY swim tunnel. It programmatically adjusts water‑flow speed inside the chamber, operates a pump to refresh the water, and visualizes operational data on a local display. The device is designed to interface with the dissolved‑oxygen meter Pico‑O2‑OEM, enabling threshold‑based pump activation in addition to simple time‑based control. All dissolved‑oxygen and temperature data fetched from the Pico‑O2‑OEM are transmitted to a PC and visualized as real‑time plots together with water‑flow speed and pump‑phase information.
+SwimResp is an open‑source device for controlling a 12 V DC pump and motor used in a DIY swim tunnel. It controls water‑flow speed inside the swim tunnel, refreshes water via a pump, and displays operational data on a local screen. The device is designed to interface with the dissolved‑oxygen meter Pico‑O2‑OEM, enabling threshold‑based pump activation in addition to simple time‑based control. All dissolved‑oxygen and temperature data fetched from the Pico‑O2‑OEM are transmitted to a PC for real‑time visualization together with water‑flow speed and pump‑phase information.
 
 This guide explains how to assemble the hardware step by step. It covers preparing the enclosure, wiring the electronics, installing the user‑interface components, and loading the software. The document focuses strictly on construction and verification; experimental applications and biological context are described separately in the accompanying manuscript.
 
@@ -82,30 +89,28 @@ Prices listed in this BOM exclude VAT, customs duties, and delivery costs.
 | Part Name | Manufacturer | Quantity | Unit Price (USD)¹ | Total Price (USD) | Notes |
 |-----------|--------------|----------|--------------------|--------------------|-------|
 | Industrial ABS enclosure, IP65, 200×120×75 mm | Generic | 1 pc | 10 | 10 | – |
-| Waterproof automotive connectors (Superseal 1.5‑style), 2‑pin | Generic | 2 male–female pairs | 8 | 8 | Bulk pack (3–5 pairs). Female connectors are also needed for a pump and a motor connected to SwimResp²|
-| L298N Motor Driver Board | Generic | 1 pc | 5 |  5 | Supports one pump and one motor at up to ~1.5 A per channel (2 A peak) at 12 V. |
+| Male waterproof automotive connectors (Superseal 1.5‑style), 2‑pin | Generic | 2 male–female pairs | 8 | 8 | Bulk pack (3–5 pairs). Female connectors are also needed for a pump and a motor connected to SwimResp²|
+| L298N motor driver board | Generic | 1 pc | 5 |  5 | Supports one pump and one motor at up to ~1.5 A per channel (2 A peak) at 12 V. |
 | Red and black wires, 20 AWG | Generic | 1 m each | 3 | 3 | Use 16 AWG for high‑current pumps and motors |
 | Round rocker switch, mounting hole diameter 15 mm, 2-pin | Generic | 1 pc | 6 | 6 | Bulk pack (3–5 pcs) |
 | DC power jack, steel, 5.5×2.1 mm | Generic | 1 pc | 7 | 7 | Bulk pack (3–5 pcs) |
-| Arduino Nano–compatible board (ATmega328P) with Mini-B USB cable and screw‑terminal adapter | Generic | 1 kit | 9 | 9 | The board can be replaced by the Arduino Nano rev.3 or 3.3 V-board from Nano family² |
+| Arduino Nano–compatible board (ATmega328P) with Mini-B USB cable and screw‑terminal adapter | Generic | 1 kit | 9 | 9 | The board can be replaced by the Arduino Nano rev.3 or 3.3 V-board from Nano family |
 | Push button, mounting hole diameter 16 mm, 2-pin | Generic | 3 pcs | 10 | 10 | Bulk pack (10-24 pcs) |
 | LED, 5 mm | Generic | 1 pc | 6 | 6 | Bulk pack (50–200 pcs) |
 | Resistor, 220 Ω, ¼ W | Generic | 1 pc | 6 | 6 | Bulk pack (20–200 pcs) |
-| OLED 128x64 I²C Monochrome Display, 5 V | Generic | 1 pc | 9 | 9 | – |
+| OLED 128x64 I²C monochrome display, 5 V | Generic | 1 pc | 9 | 9 | – |
 | Solderless breadboard BB170, 47x35x8.5 mm | Generic | 1 pc | 6 | 6 | Bulk pack (3–6 pcs) |
 | Female to male jumper wires, square jumpers, 10 cm | Generic | 1 kit | 5 | 5 | – |
-| M3 Hex Spacers Standoff Kit | Generic | 1 kit | 12 | 12 | To attach terminal and motor driver boards to enclosure |   
-| Optical oxygen meter Pico‑02 OEM module, UART, 3.3–5 V | PyroScience | 1 pc | NA⁴ | NA⁴ | Compatible with optical REDFLASH oxygen sensors and PT1000 |
+| M3 Hex spacers standoff kit | Generic | 1 kit | 12 | 12 | To attach terminal and motor driver boards to enclosure |   
+| Optical oxygen meter Pico‑02 OEM module, UART, 3.3–5 V | PyroScience | 1 pc | NA³ | NA³ | Compatible with optical REDFLASH oxygen sensors and PT1000 |
 
-**Grand total: 102 USD excluding price for Pico oxygen meter⁴ **
+**Grand total: 102 USD excluding price for Pico oxygen meter**.³
 
 *¹ Unit prices reflect the smallest purchasable quantity on Amazon.com. When only bulk packs are available, the listed price corresponds to the full pack even if a single piece is required.*
 
 *² This BOM does not include pumps or their cables.*
 
-*³ The design is compatible with 3.3 V‑logic Arduino Nano–family boards (e.g., Nano Every, Nano 33 IoT, Nano 33 BLE) provided that the 5 V relay module is replaced with a 3 V/3.3 V logic‑compatible relay module powered from 3–3.3 V. All other digital I/O (status LED, push button, PWM control signals) operate correctly at 3.3 V logic levels.*
-
-*⁴ Price available only via manufacturer quotation.*
+*³ Price available only via manufacturer quotation.*
 
 # 4. Tools and Consumables
 These items are not included in the BOM because they are general workshop supplies rather than project‑specific components, but they are still required for assembly. Most of the tools and consumables can be found in FabLabs, electronic/robotics clubs and Universities of Applied Sciences around the world.
@@ -116,7 +121,7 @@ Mechanical tools:
 * wire cutters
 * screwdriver
 * drill with step drill bit
-* rotary tool with 1 mm drill bit
+* rotary tool with 1 mm drill bit and cut‑off wheel
 
 Electrical tools and materials:
 * soldering iron
@@ -128,6 +133,7 @@ Adhesives:
 * hot-glue gun
 * hot-glue sticks
 * superglue
+* silicone tape
 
 Measuring and marking tools:
 * multimeter
@@ -138,3 +144,104 @@ Safety tools:
 * protective glasses
 * fume mask
 * heat-resistant mat
+
+# 5. Assembly Instructions
+This section contains 40 assembly steps covering mechanical preparation, wiring, and installation of all the components. Before beginning the assembly, note that several steps in Sections 5 and 6 have corresponding functional checks in Section 7. These checks can be performed immediately after completing each relevant assembly step or after the full assembly is finished. Performing the checks in parallel with assembly helps identify wiring mistakes early and reduces the risk of component damage.
+
+## 5.1 Preparing the enclosure
+SwimResp can be assembled using either a commercially available enclosure or the provided 3D‑printed enclosure. The printed version already includes all openings for the switch, power jack, and display, so drilling and cutting are not required (Steps 2–7). STL files are available in the SwimResp repository.
+
+**Step 1.** Unscrew the cover to open the enclosure.
+
+**Step 2.** Mark the hole positions on the base and on the cover of the enclosure using a ruler and a pencil, following the dimensions shown in Figure 1.
+
+Figure 1. Blueprint of the SwimResp enclosure  
+![SwimResp enclosure blueprint](images/SwimResp_enclosure_blueprint.png)
+
+**Step 3.** If you use components with different form factors or an enclosure with different dimensions, adjust the blueprint. Alternatively, mark the hole positions directly on the enclosure if dimensions differ.
+
+**Step 4.** Drill the holes at the marked positions, then refine their shape using a utility cutter if needed.
+
+**Step 5.** Cut the recess for the OLED display using either a utility cutter guided along a ruler or a rotary tool with a cut‑off wheel.
+
+**Step 6.** For oval‑shaped holes on the rear panel, drill two overlapping holes and shape the opening with a cutter or a rotary tool, including the top recess.
+
+**Step 7.** Place five M3 hex standoffs at the positions shown in the top interior view of Figure 1 and temporarily position the screw terminal adapter and the L298N motor driver board against them to verify alignment. Once correct alignment is confirmed, glue the M3 hex standoffs to the enclosure at the identified positions using superglue.
+
+**Step 8.** Remove the two protrusions on the bottom side of each body of a male waterproof connector using a utility cutter or a rotary tool with a cut‑off wheel.
+
+**Step 9.** Assemble one male waterproof connector with 15 cm wires and the other one with 5 cm wires. Ensure that the red wire is inserted into port 1 of the connector and the black wire into port 2, respectively. Incorrect color order can lead to wiring errors.
+
+**Step 10.** Insert the male waterproof connector with 15 cm wires into the oval‑shaped hole in the middle of the rear panel, and insert the second connector into the remaining oval‑shaped hole. Secure both connectors to the enclosure wall using a hot‑glue gun.
+
+## 5.2 Installing power distribution components
+**Step 11.** Mount the L298N motor driver board onto the standoffs on the bottom panel of the enclosure and screw it in place.
+
+**Step 12.** Connect the wires from the middle male waterproof connector to OUT1 and OUT2, and the wires from the second waterproof connector to OUT3 and OUT4 of the L298N motor driver board, respectively, as shown in Figure 2.
+
+Figure 2. Wiring scheme of the SwimResp
+![Wiring scheme of the SwimResp](images/SwimResp_wiring_diagram.png)
+
+**Step 13.** Mount the rocker power switch and the power connector to the rear panel of the enclosure.
+
+**Step 14.** Solder the shortest red wire (shown in Figure 3) to the power pin of the power connector and the lower pin of the power switch.
+
+**Step 15.** Solder the 15 cm black wire (shown in Figure 3) to the ground pin of the power connector and insulate the joint with heat‑shrink tubing. Attach the other end of this wire to the terminal block leading to the GND pin of the L298N motor driver board (see Figure 2).
+
+**Step 16.** Solder the 15 cm red wire (shown in Figure 3) to the upper pin of the power switch. Attach the other end of this wire to the terminal block leading to the 12 V pin of the L298N motor driver board (see Figure 2).
+
+## 5.3 Installing and wiring the controller
+**Step 17.** Prepare the wire jumpers and wires needed for the device assembly, as shown in Figure 3, using wire cutters.
+
+**Step 18.** Mount the Arduino Nano screw‑terminal adapter onto the standoffs on the bottom panel of the enclosure and screw it in place. Ensure that the D12 and D13 labels are oriented towards the USB opening on the side panel. For cleaner wire organisation, route the red and black power wires behind the adapter.
+
+**Step 19.** Install the Arduino Nano–compatible board (ATmega328P) into the screw‑terminal adapter. Check that the Arduino Nano’s D12 pin aligns with the adapter’s D12 terminal.
+
+**Step 20.** Connect six jumper wires to the L298N motor driver board (ENA, IN1, IN2, IN3, IN4, ENB) and secure the free wire ends in the screw‑terminal adapter (the pins D5-D10, respectively) as shown in Figure 2.
+
+## 5.4 Adding the user interface components
+**Step 21.** Solder the LED together with the 220 Ω resistor and the wires as shown in Figure 3. Ensure correct LED polarity (long leg is typically +).
+
+**Step 22.** Mount the LED into the corresponding opening on the front panel of the enclosure using a hot‑glue gun.
+
+**Step 23.** Connect the LED’s wire with the resistor to the D4 pin of the screw‑terminal adapter as shown in Figure 2.
+
+**Step 24.** Install three push buttons on the front panel using their mounting nuts.
+
+**Step 25.** Solder black ground wires in a daisy‑chain manner from the LED to each push button, and connect the last one to the GND pin of the screw‑terminal adapter (Figure 2).
+
+**Step 26.** Solder the green wires from each button to the corresponding pins of the screw‑terminal adapter shown in Figure 2 (see [Check 5](#check-5-no-wiring-faults-in-the-lowvoltage-control-circuit)).
+
+**Step 27.** Secure the OLED display with hot glue around its edges on both sides of the enclosure (Figure 1). Apply glue only to PCB edges, not the glass.
+
+**Step 28.** Connect the OLED display to the corresponding pins of the screw‑terminal adapter using 20 cm wire jumpers, as shown in Figure 2 and Figure 5.
+
+Figure 5. Final assembly photo.
+
+Ensure to twist the I²C wires (data and clock) together whenever routing I²C lines inside the enclosure (Figure 5).
+
+## 5.5 Connecting the DO and temperature logger
+**Step 29.** Prepare four 10 cm female jumper wires using wire cutters as shown in Figure 3. Glue the jumper heads together to form a four‑pin female connector, so they remain aligned when inserted into the enclosure.
+
+**Step 30.** Insert the connector into the rectangular opening and secure it to the enclosure wall using a hot‑glue gun (Figure 1, Figure 2).
+
+**Step 31.** Solder the other wire ends to the solder pads for the external temperature sensor on the Pico-O2 logger as shown in Figure 2. Use minimal solder to avoid bridging pads.
+
+**Step 32.** Mount the Pico-O2 logger to the rear panel of the enclosure (Figure 5).
+
+**Step 33.** Insert 20 cm wires into the Connector X1 of the Pico‑O2 logger, as shown in Figure 2. Note that the embedded LED is located above the Connector X1 for the correct orientation.
+
+**Step 34.** Connect the other wire ends to the corresponding pins of the screw‑terminal adapter (Figure 2).
+
+**Step 35.** Optionally, glue the solderless breadboard to the bottom part of the enclosure between the Pico‑O2 logger and the L298N motor driver board. This breadboard can be used for integrating new components (SwimResp modifications or enhancements).
+
+## 5.5 Finalizing the enclosure
+**Step 36.** Insert the provided insulating material into the enclosure groove to prevent water contact between the environment and internal wiring.
+
+**Step 37.** Fabricate a water-resistant layer that is attached to the USB cable connected to the Arduino Nano–compatible board (ATmega328P). This must fit the opening on the cover of the enclosure and can be made from silicone tape or another flexible waterproof material.
+
+**Step 38.** Fabricate an additional water‑resistant lid to seal the opening during storage or when the USB cable is removed.
+
+**Step 39.** Screw the cover securely to the base using the original mounting screws.
+
+**Step 40.** Ensure the cover is seated evenly and that no wires are pinched when closing the enclosure.
