@@ -89,12 +89,12 @@ Prices listed in this BOM exclude VAT, customs duties, and delivery costs.
 | Part Name | Manufacturer | Quantity | Unit Price (USD)¹ | Total Price (USD) | Notes |
 |-----------|--------------|----------|--------------------|--------------------|-------|
 | Industrial ABS enclosure, IP65, 200×120×75 mm | Generic | 1 pc | 10 | 10 | – |
-| Male waterproof automotive connectors (Superseal 1.5‑style), 2‑pin | Generic | 2 male–female pairs | 8 | 8 | Bulk pack (3–5 pairs). Female connectors are also needed for a pump and a motor connected to SwimResp²|
+| Male waterproof automotive connectors (Superseal 1.5‑style), 2‑pin | Generic | 2 male–female pairs | 8 | 8 | Bulk pack (3–5 pairs). Female connectors are also needed for a pump and a motor connected to SwimResp² |
 | L298N motor driver board | Generic | 1 pc | 5 |  5 | Supports one pump and one motor at up to ~1.5 A per channel (2 A peak) at 12 V. |
 | Red and black wires, 20 AWG | Generic | 1 m each | 3 | 3 | Use 16 AWG for high‑current pumps and motors |
 | Round rocker switch, mounting hole diameter 15 mm, 2-pin | Generic | 1 pc | 6 | 6 | Bulk pack (3–5 pcs) |
 | DC power jack, steel, 5.5×2.1 mm | Generic | 1 pc | 7 | 7 | Bulk pack (3–5 pcs) |
-| Arduino Nano–compatible board (ATmega328P) with Mini-B USB cable and screw‑terminal adapter | Generic | 1 kit | 9 | 9 | The board can be replaced by the Arduino Nano rev.3 or 3.3 V-board from Nano family |
+| Arduino Nano–compatible board (ATmega328P) with Mini-B USB cable and screw‑terminal adapter | Generic | 1 kit | 9 | 9 | The board can be replaced by the Arduino Nano rev.3 or 3.3 V-board from Nano family³ |
 | Push button, mounting hole diameter 16 mm, 2-pin | Generic | 3 pcs | 10 | 10 | Bulk pack (10-24 pcs) |
 | LED, 5 mm | Generic | 1 pc | 6 | 6 | Bulk pack (50–200 pcs) |
 | Resistor, 220 Ω, ¼ W | Generic | 1 pc | 6 | 6 | Bulk pack (20–200 pcs) |
@@ -102,15 +102,17 @@ Prices listed in this BOM exclude VAT, customs duties, and delivery costs.
 | Solderless breadboard BB170, 47x35x8.5 mm | Generic | 1 pc | 6 | 6 | Bulk pack (3–6 pcs) |
 | Female to male jumper wires, square jumpers, 10 cm | Generic | 1 kit | 5 | 5 | – |
 | M3 Hex spacers standoff kit | Generic | 1 kit | 12 | 12 | To attach terminal and motor driver boards to enclosure |   
-| Optical oxygen meter Pico‑02 OEM module, UART, 3.3–5 V | PyroScience | 1 pc | NA³ | NA³ | Compatible with optical REDFLASH oxygen sensors and PT1000 |
+| Optical oxygen meter Pico‑02 OEM module, UART, 3.3–5 V | PyroScience | 1 pc | NA⁴ | NA⁴ | Compatible with optical REDFLASH oxygen sensors and PT100 |
 
-**Grand total: 102 USD excluding price for Pico oxygen meter**.³
+**Grand total: 102 USD excluding price for Pico oxygen meter**.²˒⁴
 
 *¹ Unit prices reflect the smallest purchasable quantity on Amazon.com. When only bulk packs are available, the listed price corresponds to the full pack even if a single piece is required.*
 
-*² This BOM does not include pumps or their cables.*
+*² This BOM does not include probes, pumps, motors or their cables.*
 
-*³ Price available only via manufacturer quotation.*
+*³ This guide does not cover 3.3 V‑logic operation; refer to [SwimResp_3v3_logic_notes.md](SwimResp_3v3_logic_notes.md) for the necessary compatibility adjustments.*
+
+*⁴ Price available only via manufacturer quotation.*
 
 # 4. Tools and Consumables
 These items are not included in the BOM because they are general workshop supplies rather than project‑specific components, but they are still required for assembly. Most of the tools and consumables can be found in FabLabs, electronic/robotics clubs and Universities of Applied Sciences around the world.
