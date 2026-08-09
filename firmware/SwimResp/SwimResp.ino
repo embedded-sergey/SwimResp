@@ -340,29 +340,29 @@ void buttonEvents(){
 void displayUpdate() {
   unsigned long currentTime_display = millis();
   if(currentTime_display - previousTime_display > 1000UL){
-    oled.setCursor(0,0);
+    oled.setCursor(2,0);
     oled.set2X();
     oled.print("Velocity");
     if(reverseMotor1 == true){
-      oled.setCursor(113,0);
+      oled.setCursor(115,0);
       oled.print("R");
     }
     else{
-      oled.setCursor(113,0);
+      oled.setCursor(115,0);
       oled.print("   ");
     }
 
-    oled.setCursor(0,3);
+    oled.setCursor(2,3);
     oled.print((VELOCITY[i]));
-    oled.setCursor(64,3);
+    oled.setCursor(66,3);
     oled.print(" cm/s");
 
-    oled.setCursor(0,6);
+    oled.setCursor(2,6);
     oled.set1X();
     oled.print("NOW  ");
     oled.print(LENGTH[i]);
     oled.print("s   ");
-    oled.setCursor(64,6);
+    oled.setCursor(66,6);
     int percent_bar = (TIMER)/LENGTH[i]*100;
     int dash_bar = percent_bar/10;
     for(int k = 0; k <= dash_bar; k++){
@@ -372,14 +372,14 @@ void displayUpdate() {
       oled.print(" ");
     }
 
-    oled.setCursor(0,7);
+    oled.setCursor(2,7);
     oled.set1X();
     oled.print("NEXT ");
     oled.print(LENGTH[i+1]);
     oled.print("s   ");
-    oled.setCursor(64,7);
+    oled.setCursor(66,7);
     oled.print((VELOCITY[i+1]));
-    oled.setCursor(100,7);
+    oled.setCursor(102,7);
     oled.print("cm/s");
 
     previousTime_display = currentTime_display;

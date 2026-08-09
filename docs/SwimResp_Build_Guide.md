@@ -98,7 +98,7 @@ Prices listed in this BOM exclude VAT, customs duties, and delivery costs.
 | Push button, mounting hole diameter 16 mm, 2-pin | Generic | 3 pcs | 10 | 10 | Bulk pack (10-24 pcs) |
 | LED, 5 mm | Generic | 1 pc | 6 | 6 | Bulk pack (50–200 pcs) |
 | Resistor, 220 Ω, ¼ W | Generic | 1 pc | 6 | 6 | Bulk pack (20–200 pcs) |
-| OLED 128x64 I²C monochrome display, 5 V | Generic | 1 pc | 9 | 9 | – |
+| 1.3" OLED 128x64 I²C monochrome display, Driver chip: SH1106, 3.3–5 V | Generic | 1 pc | 9 | 9 | - |
 | Solderless breadboard BB170, 47x35x8.5 mm | Generic | 1 pc | 6 | 6 | Bulk pack (3–6 pcs) |
 | Female to male jumper wires, square jumpers, 10 cm | Generic | 1 kit | 5 | 5 | – |
 | M3 Hex spacers standoff kit | Generic | 1 kit | 12 | 12 | To attach terminal and motor driver boards to enclosure |   
@@ -214,7 +214,7 @@ Figure 2. Wiring scheme of the SwimResp
 
 **Step 27.** Secure the OLED display with hot glue around its edges on both sides of the enclosure (Figure 1). Apply glue only to PCB edges, not the glass.
 
-**Step 28.** Connect the OLED display to the corresponding pins of the screw‑terminal adapter using 20 cm wire jumpers, as shown in Figure 2 and Figure 5.
+**Step 28.** Connect the OLED display to the corresponding pins of the screw‑terminal adapter using 20 cm wire jumpers, as shown in Figure 2 and Figure 5. Note that pins GND and VCC can be swapped on some OLED modules; check the silkscreen and adjust wiring accordingly.
 
 Figure 5. Final assembly photo.
 
