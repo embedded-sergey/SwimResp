@@ -1,16 +1,16 @@
 ---
 title: "SwimResp Build Guide"
 author: "Sergey Morozov"
-date: "2 August 2026"
-revision: "0.3"
+date: "9 August 2026"
+revision: "0.5"
 toc: true
 toc-depth: 3
 ---
 
 # SwimResp Build Guide
-**Revision:** 0.3
+**Revision:** 0.5
 **Author:** Sergey Morozov  
-**Date:** 2 August 2026
+**Date:** 9 August 2026
 
 <!-- begin-md-image -->
 ![SwimResp Device](images/SwimResp_photo.jpg)
@@ -32,7 +32,13 @@ toc-depth: 3
    5.4 [Adding the user interface components](#54-adding-the-user-interface-components)  
    5.5 [Connecting the DO and temperature logger](#55-connecting-the-do-and-temperature-logger)  
    5.6 [Finalizing the enclosure](#56-finalizing-the-enclosure)
-
+6. [Software Setup](#6-software-setup)   
+   6.1 [Installing the Arduino IDE and uploading firmware](#61-installing-the-arduino-ide-and-uploading-firmware)   
+   6.2 [Configuring the data‑logging software](#62-configuring-the-data‑logging-software)   
+   6.3 [Establishing the serial connection and recording data](#63-establishing-the-serial-connection-and-recording-data)    
+   6.4 [Exporting and managing recorded data](#65-exporting-and-managing-recorded-data)
+7. [Functional Testing and Verification](#7-functional-testing-and-verification)
+8. [Appendices](#8-appendices)
 ---
 
 # 1. Introduction
@@ -247,3 +253,66 @@ Ensure to twist the I²C wires (data and clock) together whenever routing I²C l
 **Step 39.** Screw the cover securely to the base using the original mounting screws.
 
 **Step 40.** Ensure the cover is seated evenly and that no wires are pinched when closing the enclosure.
+
+# 6. Software Setup
+This section describes how to program the Arduino Nano and configure the software required to record data from SwimResp. The workflow below reflects the configuration tested and validated for this build.
+
+## 6.1 Configuring the data‑logging software
+SwimResp was validated on Windows 10 using Microsoft Excel together with PLX-DAQ-2, an Excel-based serial data logger. This combination provides a straightforward installation process, stable serial communication, direct data logging, and real‑time plotting.
+
+Install Microsoft Excel (version 2016 or newer) if it is not already available on your system. Download PLX‑DAQ‑2 version 2.11 from its original source: https://forum.arduino.cc/t/plx-daq-version-2-now-with-64-bit-support-and-further-new-features/420628. 
+
+SwimResp includes a macro‑free Excel template (SwimResp_template.xlsx) containing recommended column names, formatting, and real‑time plots. This template is used together with PLX‑DAQ‑2 as described in Section 6.4.
+
+Note that PLX‑DAQ‑2 is available only for Windows. Users working on macOS or Linux may employ alternative serial‑logging tools such as CoolTerm or Python with the PySerial library; however, these alternatives were not validated during development and are not covered in this guide.
+
+## 6.2 Preparing the SwimResp Excel Environment
+Since PLX‑DAQ‑2 cannot be redistributed after modification and does not include the SwimResp worksheet, users should set up the SwimResp environment locally. The setup is a simple, one‑time, five‑step process and requires no programming skills.
+
+1. Unblock both PLX‑DAQ‑2.xlsm and SwimResp_template.xlsm because Windows blocks downloaded Excel macro files. Either enable Macros within Excel or right‑click the .xlsm file, select 'Properties', tick 'Unblock' and press the 'Apply' button.
+
+2. Copy the 'SwimResp' sheet into PLX‑DAQ‑2.xlsm. Open both PLX‑DAQ‑2.xlsm and SwimResp_template.xlsm, right‑click the SwimResp sheet tab, select "Move or Copy…" and select PLX‑DAQ‑2.xlsm, press OK. Close SwimResp_template.xlsm without saving.
+
+3. Assign the Plotting macro. In PLX‑DAQ‑2.xlsm, right‑click the "Show Plots" checkbox, select "Assign Macro…", choose "Sheet2.ShowPlotCheckBox", and press OK.
+
+4. Delete all sheets except SwimResp. Remove all other sheets in PLX‑DAQ‑2.xlsm so that only the SwimResp sheet remains.
+
+5. Save the file PLX‑DAQ‑2.xlsm in Excel, close it and rename to SwimResp.xlsm.
+
+Keep a backup copy of the assembled SwimResp.xlsm outside your experiment folders. If the file is lost or overwritten, it must be rebuilt using the steps in Section 6.2.
+
+## 6.3 Installing the Arduino IDE and uploading firmware
+SwimResp uses an Arduino Nano microcontroller (original or clone). To load the firmware:
+
+1. Install Arduino IDE version 2.0 or later from the official Arduino website.
+2. Connect the Arduino Nano to your PC via USB.
+3. In Tools → Board, select Arduino Nano.
+4. In Tools → Processor, select ATmega328P (Old Bootloader) if you are using a common Nano clone.
+5. Open the provided SwimResp.ino firmware file.
+6. Adjust the variable values for respirometry phases according to your experimental design.
+7. Click Upload to flash the firmware to the board.
+
+After uploading, the Arduino Nano will begin sending serial data over USB to PC (see [Check 6](#check-6-controlling-pumps-by-arduino-code)).
+
+## 6.4 Establishing the serial connection and recording data
+Open the SwimResp.xlsm file and click on "Open PLX DAQ UI" button there if it is not popped up automatically.
+
+1. In the PLX‑DAQ‑2 control panel, select the serial port (COM number) corresponding to the connected Arduino Nano. 
+2. Click Connect to open the serial port, initialize communication, and begin writing incoming data directly into the spreadsheet.
+3. For improved performance and stability during long recordings, minimize the PLX‑DAQ‑2 control window while data collection is in progress. 
+4. Note that editing the Excel sheet during the data collection might break the serial connection and Excel will be relaunched.
+
+## 6.5 Exporting and managing recorded data
+When data collection is complete, press Disconnect in the PLX‑DAQ‑2 control panel to close the serial connection. The recorded data remain in the spreadsheet and should be saved at this stage. Export the dataset either as a standard Excel workbook (.xlsx) or as a comma‑separated values file (.csv) for downstream analysis. If the Connect button is pressed again before exporting, the spreadsheet will be cleared and new data will overwrite the previous session. Always save or export the data before reconnecting to avoid accidental data loss (see [Check 7](#check-7-verifying-serial-communication-and-data-logging)).
+
+After completing all assembly and software steps, perform the full‑system validation described in [Check 8](#check-8-full-system-test-with-submerged-pumps-and-currentdraw-safety).
+
+For reproducibility, store the SwimResp.ino file used for the experiment together with the SwimResp.xlsm dataset or exported .csv file.
+
+# 7. Functional Testing and Verification
+WIP
+
+# 8. Appendices
+
+Appendix 1: Schematics of SwimResp
+![Schematics of SwimResp](images/SwimResp_schematics.png)
