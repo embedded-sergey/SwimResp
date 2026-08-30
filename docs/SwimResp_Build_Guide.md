@@ -1,16 +1,16 @@
 ---
 title: "SwimResp Build Guide"
 author: "Sergey Morozov"
-date: "9 August 2026"
-revision: "0.5"
+date: "30 August 2026"
+revision: "0.6"
 toc: true
 toc-depth: 3
 ---
 
 # SwimResp Build Guide
-**Revision:** 0.5
+**Revision:** 0.6
 **Author:** Sergey Morozov  
-**Date:** 9 August 2026
+**Date:** 30 August 2026
 
 <!-- begin-md-image -->
 ![SwimResp Device](images/SwimResp_photo.jpg)
@@ -284,19 +284,26 @@ Keep a backup copy of the assembled SwimResp.xlsm outside your experiment folder
 ## 6.3 Installing the Arduino IDE and uploading firmware
 SwimResp uses an Arduino Nano microcontroller (original or clone). To load the firmware:
 
-1. Install Arduino IDE version 2.0 or later from the official Arduino website.
+1. Install Arduino IDE 2.0 or later from the official Arduino website.
 
-2. Connect the Arduino Nano to your PC via USB.
+2. Open the provided SwimResp.ino firmware file in the Arduino IDE.
 
-3. In Tools → Board, select Arduino Nano.
+3. Connect the Arduino Nano to your PC via USB.
 
-4. In Tools → Processor, select ATmega328P (Old Bootloader) if you are using a common Nano clone.
+4. In Tools → Board, select Arduino Nano.
 
-5. Open the provided SwimResp.ino firmware file.
+5. In Tools → Processor, select ATmega328P (Old Bootloader) if you are using a common Nano clone.
 
-6. Adjust the variable values for respirometry phases according to your experimental design.
+6. In Tools → Port, select the COM port used by the Arduino Nano.
 
-7. Click Upload to flash the firmware to the board.
+7. Install the SSD1306Ascii display library:
+    - Open Sketch → Include Library → Manage Libraries…
+    - Search for SSD1306Ascii
+    - Click Install
+
+8. Adjust the variable values in the USER INTERFACE section of the firmware according to your experimental design.
+
+9. Click Upload (left‑arrow icon below the menu bar) to flash the firmware to the board. If the output panel shows no errors, you may close the Arduino IDE.
 
 After uploading, the Arduino Nano will begin sending serial data over USB to PC (see [Check 6](#check-6-controlling-pumps-by-arduino-code)).
 
@@ -307,7 +314,7 @@ Open the SwimResp.xlsm file and click on "Open PLX DAQ UI" button there if it is
 
 2. Click Connect to open the serial port, initialize communication, and begin writing incoming data directly into the spreadsheet.
 
-3. For improved performance and stability during long recordings, minimize the PLX‑DAQ‑2 control window while data collection is in progress. 
+3. For improved performance and stability during long recordings, untick "Show plots" and minimize the PLX‑DAQ‑2 control window while data collection is in progress. 
 
 4. Note that editing the Excel sheet during the data collection might break the serial connection and Excel will be relaunched.
 
